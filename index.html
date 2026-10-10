@@ -9,6 +9,7 @@
             box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
+            touch-action: none; /* Estää selaimen oletuseleet ja vilkkumisen */
         }
         body {
             margin: 0;
@@ -28,7 +29,6 @@
             display: block;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
             border-radius: 12px;
-            cursor: pointer;
         }
     </style>
 </head>
@@ -53,7 +53,6 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-// Pelitilat
 const STATES = { TUTORIAL: 0, PLAYING: 1, GAMEOVER: 2, WIN: 3 };
 let gameState = STATES.TUTORIAL;
 
@@ -61,40 +60,37 @@ let level = 1;
 let maxLevels = 5;
 let highScore = localStorage.getItem('shadowDeliveryProHigh') || 1;
 
-// Pelaaja
 let player = {
     x: 50,
     y: 520,
     radius: 12,
-    speed: 3,
+    speed: 3.2,
     color: '#38bdf8'
 };
 
-// Joystick-ohjaus
+// Korjattu Joystick-ohjaus
 let joystick = {
     active: false,
+    pointerId: null,
     startX: 0,
     startY: 0,
     x: 0,
     y: 0,
     forceX: 0,
     forceY: 0,
-    radius: 40
+    radius: 45
 };
 
-// Pelimaailman elementit
 let walls = [];
 let guards = [];
 let packages = [];
 let exitZone = { x: 330, y: 520, radius: 25, active: false };
 
-// Tason lataus
 function loadLevel(lvl) {
     walls = [];
     guards = [];
     packages = [];
     
-    // Jokaisella tasolla erilaisia seiniä ja vartijoita
     if (lvl === 1) {
         walls = [
             { x: 120, y: 150, w: 30, h: 250 },
@@ -119,7 +115,6 @@ function loadLevel(lvl) {
         exitZone = { x: 350, y: 520, radius: 22, active: true };
         player.x = 50; player.y = 520;
     } else {
-        // Vaativammat satunnaistetut tasot
         walls = [
             { x: 50, y: 150, w: 100, h: 30 },
             { x: 250, y: 250, w: 100, h: 30 },
@@ -135,8 +130,8 @@ function loadLevel(lvl) {
     }
 }
 
-// Kosketus- ja hiiriohjaus Joystickille
-window.addEventListener('pointerdown', (e) => {
+// Parannetut pointer-tapahtumat, jotka lukitsevat kosketuksen täydellisesti
+canvas.addEventListener('pointerdown', (e) => {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.clientX - rect.left;
     const clientY = e.clientY - rect.top;
@@ -147,9 +142,7 @@ window.addEventListener('pointerdown', (e) => {
         return;
     }
     if (gameState === STATES.GAMEOVER || gameState === STATES.WIN) {
-        if (gameState === STATES.WIN && level <= maxLevels) {
-            // Jatketaan seuraavaan tasoon
-        } else {
+        if (gameState !== STATES.WIN || level > maxLevels) {
             level = 1;
         }
         gameState = STATES.PLAYING;
@@ -157,18 +150,22 @@ window.addEventListener('pointerdown', (e) => {
         return;
     }
 
-    // Aktivoi joystick näytön alaosasta
-    joystick.active = true;
-    joystick.startX = clientX;
-    joystick.startY = clientY;
-    joystick.x = clientX;
-    joystick.y = clientY;
-    joystick.forceX = 0;
-    joystick.forceY = 0;
+    // Luodaan joystick siihen kohtaan mihin sormi osuu
+    if (!joystick.active) {
+        joystick.active = true;
+        joystick.pointerId = e.pointerId;
+        joystick.startX = clientX;
+        joystick.startY = clientY;
+        joystick.x = clientX;
+        joystick.y = clientY;
+        joystick.forceX = 0;
+        joystick.forceY = 0;
+        canvas.setPointerCapture(e.pointerId);
+    }
 });
 
-window.addEventListener('pointermove', (e) => {
-    if (!joystick.active) return;
+canvas.addEventListener('pointermove', (e) => {
+    if (!joystick.active || e.pointerId !== joystick.pointerId) return;
     const rect = canvas.getBoundingClientRect();
     const clientX = e.clientX - rect.left;
     const clientY = e.clientY - rect.top;
@@ -188,13 +185,18 @@ window.addEventListener('pointermove', (e) => {
     joystick.forceY = dy / joystick.radius;
 });
 
-window.addEventListener('pointerup', () => {
-    joystick.active = false;
-    joystick.forceX = 0;
-    joystick.forceY = 0;
-});
+function endJoystick(e) {
+    if (joystick.active && e.pointerId === joystick.pointerId) {
+        joystick.active = false;
+        joystick.pointerId = null;
+        joystick.forceX = 0;
+        joystick.forceY = 0;
+    }
+}
 
-// Törmäystarkistus seinien kanssa (AABB)
+canvas.addEventListener('pointerup', endJoystick);
+canvas.addEventListener('pointercancel', endJoystick);
+
 function checkWallCollision(nx, ny) {
     for (let w of walls) {
         if (
@@ -212,25 +214,17 @@ function checkWallCollision(nx, ny) {
 function update() {
     if (gameState !== STATES.PLAYING) return;
 
-    // Liikuta pelaajaa joystickin mukaan
     if (joystick.active) {
         let nextX = player.x + joystick.forceX * player.speed;
         let nextY = player.y + joystick.forceY * player.speed;
 
-        // Tarkista seinät erikseen X- ja Y-akseleilla sulavaa liukua varten
-        if (!checkWallCollision(nextX, player.y)) {
-            player.x = nextX;
-        }
-        if (!checkWallCollision(player.x, nextY)) {
-            player.y = nextY;
-        }
+        if (!checkWallCollision(nextX, player.y)) player.x = nextX;
+        if (!checkWallCollision(player.x, nextY)) player.y = nextY;
     }
 
-    // Rajat
     player.x = Math.max(player.radius, Math.min(WIDTH - player.radius, player.x));
     player.y = Math.max(player.radius, Math.min(HEIGHT - player.radius, player.y));
 
-    // Päivitä vartijat ja valokeilat
     guards.forEach(g => {
         if (g.vx) {
             g.x += g.vx;
@@ -242,7 +236,6 @@ function update() {
         }
         g.angle += 0.02;
 
-        // Vartijan valokeilan osuvuus pelaajaan
         let dx = player.x - g.x;
         let dy = player.y - g.y;
         let dist = Math.hypot(dx, dy);
@@ -251,13 +244,11 @@ function update() {
             let angleToPlayer = Math.atan2(dy, dx);
             let angleDiff = Math.abs(normalizeAngle(angleToPlayer - g.angle));
             if (angleDiff < g.spread / 2) {
-                // Valo osui! Vartija nappasi kiinni
                 gameState = STATES.GAMEOVER;
             }
         }
     });
 
-    // Kerää paketit
     packages.forEach(pkg => {
         if (!pkg.collected) {
             let dist = Math.hypot(player.x - pkg.x, player.y - pkg.y);
@@ -268,12 +259,10 @@ function update() {
         }
     });
 
-    // Tarkista maali (Exit)
     let allCollected = packages.every(p => p.collected);
     if (allCollected && exitZone.active) {
         let distToExit = Math.hypot(player.x - exitZone.x, player.y - exitZone.y);
         if (distToExit < player.radius + exitZone.radius) {
-            // Taso läpäisty!
             if (level < maxLevels) {
                 level++;
                 if (level > highScore) {
@@ -297,7 +286,6 @@ function normalizeAngle(angle) {
 function draw() {
     ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
-    // Piirrä seinät / rakennukset
     ctx.fillStyle = '#27272a';
     ctx.strokeStyle = '#3f3f46';
     ctx.lineWidth = 2;
@@ -306,7 +294,6 @@ function draw() {
         ctx.strokeRect(w.x, w.y, w.w, w.h);
     });
 
-    // Piirrä vartijoiden valokeilat
     guards.forEach(g => {
         ctx.save();
         ctx.beginPath();
@@ -317,14 +304,12 @@ function draw() {
         ctx.fill();
         ctx.restore();
 
-        // Vartija itse
         ctx.fillStyle = '#ef4444';
         ctx.beginPath();
         ctx.arc(g.x, g.y, g.radius, 0, Math.PI * 2);
         ctx.fill();
     });
 
-    // Piirrä paketit
     packages.forEach(pkg => {
         if (!pkg.collected) {
             ctx.fillStyle = '#f59e0b';
@@ -335,14 +320,12 @@ function draw() {
         }
     });
 
-    // Piirrä maali / poistumisalue
     let allCollected = packages.every(p => p.collected);
     ctx.fillStyle = allCollected ? '#10b981' : '#3f3f46';
     ctx.beginPath();
     ctx.arc(exitZone.x, exitZone.y, exitZone.radius, 0, Math.PI * 2);
     ctx.fill();
 
-    // Piirrä pelaaja
     ctx.fillStyle = player.color;
     ctx.shadowBlur = 12;
     ctx.shadowColor = player.color;
@@ -351,22 +334,21 @@ function draw() {
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Piirrä Joystick, jos aktiivinen
+    // Piirrä joystick jos aktiivinen
     if (joystick.active) {
         ctx.beginPath();
         ctx.arc(joystick.startX, joystick.startY, joystick.radius, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
         ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
         ctx.stroke();
 
         ctx.beginPath();
-        ctx.arc(joystick.x, joystick.y, 20, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(56, 189, 248, 0.5)';
+        ctx.arc(joystick.x, joystick.y, 22, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.6)';
         ctx.fill();
     }
 
-    // Yläpalkin tekstit
     if (gameState === STATES.PLAYING) {
         ctx.fillStyle = '#f4f4f5';
         ctx.font = 'bold 16px sans-serif';
@@ -375,9 +357,8 @@ function draw() {
         ctx.fillText(allCollected ? 'Hakeudu vihreään maaliin!' : 'Kerää oranssi paketti!', 20, 55);
     }
 
-    // Tutoriaali / Aloitusruutu
     if (gameState === STATES.TUTORIAL) {
-        ctx.fillStyle = 'rgba(9, 9, 11, 0.9)';
+        ctx.fillStyle = 'rgba(9, 9, 11, 0.92)';
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
         ctx.fillStyle = '#38bdf8';
@@ -387,7 +368,7 @@ function draw() {
 
         ctx.fillStyle = '#d4d4d8';
         ctx.font = '15px sans-serif';
-        ctx.fillText('1. Käytä ruudulla ilmestyvää joystickiä liikkumiseen.', WIDTH / 2, HEIGHT / 2 - 40);
+        ctx.fillText('1. Raahaa sormella mistä tahansa ohjataksesi.', WIDTH / 2, HEIGHT / 2 - 40);
         ctx.fillText('2. Vältä punaisten vartijoiden valokeiloja.', WIDTH / 2, HEIGHT / 2 - 10);
         ctx.fillText('3. Kerää paketti ja pakene vihreään maaliin.', WIDTH / 2, HEIGHT / 2 + 20);
 
@@ -396,7 +377,6 @@ function draw() {
         ctx.fillText('Napauta aloittaaksesi', WIDTH / 2, HEIGHT / 2 + 90);
     }
 
-    // Game Over -ruutu
     if (gameState === STATES.GAMEOVER) {
         ctx.fillStyle = 'rgba(9, 9, 11, 0.9)';
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
@@ -404,14 +384,13 @@ function draw() {
         ctx.fillStyle = '#ef4444';
         ctx.font = 'bold 30px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('KIINNITTE! VALO OSI', WIDTH / 2, HEIGHT / 2 - 30);
+        ctx.fillText('VALO OSI!', WIDTH / 2, HEIGHT / 2 - 30);
 
         ctx.fillStyle = '#38bdf8';
         ctx.font = 'bold 16px sans-serif';
         ctx.fillText('Napauta yrittääksesi uudelleen', WIDTH / 2, HEIGHT / 2 + 30);
     }
 
-    // Voittoruutu
     if (gameState === STATES.WIN) {
         ctx.fillStyle = 'rgba(9, 9, 11, 0.95)';
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
