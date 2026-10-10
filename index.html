@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Väripulma</title>
+    <title>Color Lab - Lajittelupeli</title>
     <style>
         * {
             box-sizing: border-box;
@@ -15,224 +15,671 @@
             padding: 0;
             background: #0f172a;
             color: #f8fafc;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100vh;
+            padding: 20px 0;
+            overflow: hidden;
+        }
+        .header {
+            text-align: center;
+        }
+        h1 {
+            margin: 0 0 5px 0;
+            font-size: 22px;
+            color: #38bdf8;
+        }
+        .mission-text {
+            font-size: 14px;
+            color: #fbbf24;
+            margin-top: 4px;
+        }
+        .level-info {
+            font-size: 15px;
+            color: #94a3b8;
+        }
+        .game-board {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            width: 100%;
+            max-width: 380px;
+            padding: 0 20px;
+            flex-grow: 1;
+            align-content: center;
+            justify-content: center;
+        }
+        /* Koeputki / Astia -tyyli */
+        .tube {
+            width: 55px;
+            height: 180px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: none;
+            border-bottom-left-radius: 25px;
+            border-bottom-right-radius: 25px;
+            display: flex;
+            flex-direction: column-reverse; /* Värit pinoutuvat alhaalta ylös */
+            align-items: center;
+            padding: 6px;
+            gap: 6px;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+            position: relative;
+        }
+        .tube.selected {
+            border-color: #38bdf8;
+            transform: translateY(-8px);
+            box-shadow: 0 10px 20px rgba(56, 189, 248, 0.3);
+        }
+        .liquid-block {
+            width: 100%;
+            height: 36px;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .footer {
+            display: flex;
+            gap: 15px;
+        }
+        .btn {
+            background: #0284c7;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .win-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.95);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            overflow: hidden;
+            z-index: 10;
+            display: none;
         }
-        .game-container {
-            width: 100%;
-            max-width: 400px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            margin-bottom: 20px;
-            font-size: 18px;
-            font-weight: bold;
-            background: #1e293b;
-            padding: 12px 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            width: 100%;
-            max-width: 320px;
-            margin-bottom: 20px;
-        }
-        .tile {
-            aspect-ratio: 1;
-            border-radius: 16px;
-            cursor: pointer;
-            transition: transform 0.1s ease, filter 0.2s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            border: 3px solid rgba(255,255,255,0.1);
-        }
-        .tile:active {
-            transform: scale(0.92);
-        }
-        .message {
-            font-size: 16px;
-            color: #94a3b8;
-            height: 24px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .btn {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 12px;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
-            transition: background 0.2s, transform 0.1s;
-        }
-        .btn:active {
-            transform: scale(0.96);
-            background: #2563eb;
+        .win-screen h2 {
+            color: #4ade80;
+            font-size: 32px;
+            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
 
-<div class="game-container">
     <div class="header">
-        <span id="scoreText">Taso: 1</span>
-        <span id="bestText">Ennätys: 1</span>
+        <h1>COLOR LAB</h1>
+        <div class="level-info" id="levelText">Taso 1</div>
+        <div class="mission-text" id="missionText">Lajittele värit omiin putkiinsa!</div>
     </div>
 
-    <div class="message" id="messageText">Klikkaa värejä järjestyksessä!</div>
+    <div class="game-board" id="gameBoard"></div>
 
-    <div class="grid" id="puzzleGrid"></div>
+    <div class="footer">
+        <button class="btn" onclick="resetLevel()">Aloita taso uudelleen</button>
+    </div>
 
-    <button class="btn" id="actionBtn" onclick="startGame()">Aloita peli</button>
-</div>
+    <div class="win-screen" id="winScreen">
+        <h2>ERINOMAISTA!</h2>
+        <p style="margin-bottom: 20px; font-size: 18px;" id="winReasonText">Laboratorio puhdistettu!</p>
+        <button class="btn" onclick="nextLevel()">Seuraava haaste</button>
+    </div>
 
 <script>
-    // Väripaletti pulmapeliin
-    const colors = [
+    const palette = [
         '#ef4444', // Punainen
         '#3b82f6', // Sininen
         '#10b981', // Vihreä
         '#f59e0b', // Keltainen
+        '#ec4899', // Vaaleanpunainen
         '#8b5cf6', // Violetti
-        '#ec4899'  // Vaaleanpunainen
+        '#06b6d4'  // Syaani
     ];
 
-    let level = 1;
-    let bestLevel = localStorage.getItem('colorPuzzleBest') || 1;
-    let sequence = [];
-    let playerSequence = [];
-    let isPlaying = false;
-    let isShowingSequence = false;
+    let currentLevel = parseInt(localStorage.getItem('colorLabLevel')) || 1;
+    let tubes = [];
+    let initialTubes = [];
+    let selectedTubeIndex = null;
+    const CAPACITY = 4; // Max 4 lohkoa per putki
 
-    const gridEl = document.getElementById('puzzleGrid');
-    const scoreText = document.getElementById('scoreText');
-    const bestText = document.getElementById('bestText');
-    const messageText = document.getElementById('messageText');
-    const actionBtn = document.getElementById('actionBtn');
+    // Generoi aina täysin uudenlaisen tason tasoluvun mukaan
+    function generateLevel(lvl) {
+        // Tasoilla vaihtelee värien määrä (2 - 6 väriä) ja putkien määrä
+        let colorCount = Math.min(2 + Math.floor((lvl - 1) / 2), palette.length - 1);
+        let filledTubesCount = colorCount;
+        let emptyTubesCount = lvl % 2 === 0 ? 2 : 1; // Vaihtelee tyhjien putkien määrää, tekee jokaisesta tasosta erilaisen rakenteen
+        let totalTubes = filledTubesCount + emptyTubesCount;
 
-    bestText.innerText = `Ennätys: ${bestLevel}`;
+        let pool = [];
+        // Luodaan värit
+        for (let c = 0; c < colorCount; c++) {
+            for (let i = 0; i < CAPACITY; i++) {
+                pool.push(c);
+            }
+        }
+        // Sekoitetaan värit täysin satunnaisesti putkiin
+        pool.sort(() => Math.random() - 0.5);
 
-    // Luodaan pelilaudalle 6 nappia
-    function createGrid() {
-        gridEl.innerHTML = '';
-        for (let i = 0; i < 6; i++) {
-            const tile = document.createElement('div');
-            tile.classList.add('tile');
-            tile.style.backgroundColor = colors[i];
-            tile.dataset.index = i;
-            tile.addEventListener('click', () => handleTileClick(i));
-            gridEl.appendChild(tile);
+        let generatedTubes = [];
+        for (let i = 0; i < filledTubesCount; i++) {
+            let tube = [];
+            for (let j = 0; j < CAPACITY; j++) {
+                tube.push(pool.pop());
+            }
+            generatedTubes.push(tube);
+        }
+
+        // Lisätään tyhjät putket
+        for (let i = 0; i < emptyTubesCount; i++) {
+            generatedTubes.push([]);
+        }
+
+        // Varmistetaan ettei taso ala valmiiksi ratkaistuna
+        if (isAlreadySolved(generatedTubes)) {
+            return generateLevel(lvl); // Generoi uudelleen jos vahingossa tuli ratkaistu
+        }
+
+        return generatedTubes;
+    }
+
+    function isAlreadySolved(tubeList) {
+        let solved = true;
+        tubeList.forEach(t => {
+            if (t.length > 0) {
+                if (t.length !== CAPACITY) solved = false;
+                let first = t[0];
+                if (!t.every(item => item === first)) solved = false;
+            }
+        });
+        return solved;
+    }
+
+    function initLevel() {
+        tubes = generateLevel(currentLevel);
+        initialTubes = JSON.parse(JSON.stringify(tubes));
+        selectedTubeIndex = null;
+
+        document.getElementById('levelText').innerText = `Taso ${currentLevel}`;
+        
+        // Vaihdellaan dynaamisia tehtäväkuvauksia fiiliksen mukaan
+        const missions = [
+            "Erota eri värit omiin koeputkiinsa!",
+            "Siirrä nesteet puhtaisiin astioihin!",
+            "Puhdista laboratorio lajittelemalla värit!",
+            "Järjestä kemikaalit oikeisiin pulloihin!"
+        ];
+        document.getElementById('missionText').innerText = missions[(currentLevel - 1) % missions.length];
+        document.getElementById('winScreen').style.display = 'none';
+
+        renderBoard();
+    }
+
+    function renderBoard() {
+        const boardEl = document.getElementById('gameBoard');
+        boardEl.innerHTML = '';
+
+        tubes.forEach((tube, index) => {
+            const tubeEl = document.createElement('div');
+            tubeEl.classList.add('tube');
+            if (selectedTubeIndex === index) {
+                tubeEl.classList.add('selected');
+            }
+            tubeEl.onclick = () => handleTubeClick(index);
+
+            tube.forEach(colorIdx => {
+                const block = document.createElement('div');
+                block.classList.add('liquid-block');
+                block.style.backgroundColor = palette[colorIdx];
+                tubeEl.appendChild(block);
+            });
+
+            boardEl.appendChild(tubeEl);
+        });
+    }
+
+    function handleTubeClick(index) {
+        if (selectedTubeIndex === null) {
+            // Valitse putki vain jos siinä on jotain siirrettävää
+            if (tubes[index].length > 0) {
+                selectedTubeIndex = index;
+                renderBoard();
+            }
+        } else {
+            if (selectedTubeIndex === index) {
+                // Peruuta valinta napauttamalla samaa uudestaan
+                selectedTubeIndex = null;
+                renderBoard();
+            } else {
+                // Yritä kaataa nestettä valitusta putkesta tähän putkeen
+                pourLiquid(selectedTubeIndex, index);
+                selectedTubeIndex = null;
+                renderBoard();
+                checkWin();
+            }
         }
     }
 
-    function startGame() {
-        level = 1;
-        sequence = [];
-        actionBtn.style.display = 'none';
-        nextLevel();
+    function pourLiquid(fromIdx, toIdx) {
+        let sourceTube = tubes[fromIdx];
+        let targetTube = tubes[toIdx];
+
+        if (sourceTube.length === 0) return;
+        if (targetTube.length >= CAPACITY) return; // Kohdeputki täynnä
+
+        let colorToMove = sourceTube[sourceTube.length - 1];
+
+        // Jos kohdeputki ei ole tyhjä, päällimmäisen värin täytyy täsmätä
+        if (targetTube.length > 0) {
+            let targetTopColor = targetTube[targetTube.length - 1];
+            if (targetTopColor !== colorToMove) return;
+        }
+
+        // Siirretään kaikki samanväriset peräkkäiset lohkot kerralla
+        let countToMove = 0;
+        for (let i = sourceTube.length - 1; i >= 0; i--) {
+            if (sourceTube[i] === colorToMove) {
+                countToMove++;
+            } else {
+                break;
+            }
+        }
+
+        // Tarkistetaan tila kohdeputkessa
+        let spaceLeft = CAPACITY - targetTube.length;
+        let actualMoveCount = Math.min(countToMove, spaceLeft);
+
+        for (let i = 0; i < actualMoveCount; i++) {
+            sourceTube.pop();
+            targetTube.push(colorToMove);
+        }
+    }
+
+    function checkWin() {
+        let won = true;
+        tubes.forEach(tube => {
+            if (tube.length > 0) {
+                if (tube.length !== CAPACITY) won = false;
+                let firstColor = tube[0];
+                if (!tube.every(c => c === firstColor)) won = false;
+            }
+        });
+
+        if (won) {
+            document.getElementById('winReasonText').innerText = `Läpäisit tason ${currentLevel} loistavasti!`;
+            document.getElementById('winScreen').style.display = 'flex';
+        }
+    }
+
+    function resetLevel() {
+        tubes = JSON.parse(JSON.stringify(initialTubes));
+        selectedTubeIndex = null;
+        renderBoard();
     }
 
     function nextLevel() {
-        playerSequence = [];
-        scoreText.innerText = `Taso: ${level}`;
-        messageText.innerText = 'Katso sarja...';
-        
-        // Lisätään sarjaan uusi satunnainen väri (0-5)
-        sequence.push(Math.floor(Math.random() * 6));
-        
-        showSequence();
+        currentLevel++;
+        localStorage.setItem('colorLabLevel', currentLevel);
+        initLevel();
     }
 
-    function showSequence() {
-        isShowingSequence = true;
-        let i = 0;
-        const tiles = document.querySelectorAll('.tile');
+    // Käynnistä peli
+    initLevel();
+</script>
 
-        const interval = setInterval(() => {
-            // Palautetaan kaikkien reunat normaaliksi
-            tiles.forEach(t => t.style.borderColor = 'rgba(255,255,255,0.1)');
-            tiles.forEach(t => t.style.filter = 'brightness(1)');
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Color Lab - Lajittelupeli</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0f172a;
+            color: #f8fafc;
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100vh;
+            padding: 20px 0;
+            overflow: hidden;
+        }
+        .header {
+            text-align: center;
+        }
+        h1 {
+            margin: 0 0 5px 0;
+            font-size: 22px;
+            color: #38bdf8;
+        }
+        .mission-text {
+            font-size: 14px;
+            color: #fbbf24;
+            margin-top: 4px;
+        }
+        .level-info {
+            font-size: 15px;
+            color: #94a3b8;
+        }
+        .game-board {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            width: 100%;
+            max-width: 380px;
+            padding: 0 20px;
+            flex-grow: 1;
+            align-content: center;
+            justify-content: center;
+        }
+        /* Koeputki / Astia -tyyli */
+        .tube {
+            width: 55px;
+            height: 180px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: none;
+            border-bottom-left-radius: 25px;
+            border-bottom-right-radius: 25px;
+            display: flex;
+            flex-direction: column-reverse; /* Värit pinoutuvat alhaalta ylös */
+            align-items: center;
+            padding: 6px;
+            gap: 6px;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+            position: relative;
+        }
+        .tube.selected {
+            border-color: #38bdf8;
+            transform: translateY(-8px);
+            box-shadow: 0 10px 20px rgba(56, 189, 248, 0.3);
+        }
+        .liquid-block {
+            width: 100%;
+            height: 36px;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .footer {
+            display: flex;
+            gap: 15px;
+        }
+        .btn {
+            background: #0284c7;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .win-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            display: none;
+        }
+        .win-screen h2 {
+            color: #4ade80;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
 
-            if (i < sequence.length) {
-                let activeTile = tiles[sequence[i]];
-                activeTile.style.borderColor = '#ffffff';
-                activeTile.style.filter = 'brightness(1.5)';
-                i++;
+    <div class="header">
+        <h1>COLOR LAB</h1>
+        <div class="level-info" id="levelText">Taso 1</div>
+        <div class="mission-text" id="missionText">Lajittele värit omiin putkiinsa!</div>
+    </div>
+
+    <div class="game-board" id="gameBoard"></div>
+
+    <div class="footer">
+        <button class="btn" onclick="resetLevel()">Aloita taso uudelleen</button>
+    </div>
+
+    <div class="win-screen" id="winScreen">
+        <h2>ERINOMAISTA!</h2>
+        <p style="margin-bottom: 20px; font-size: 18px;" id="winReasonText">Laboratorio puhdistettu!</p>
+        <button class="btn" onclick="nextLevel()">Seuraava haaste</button>
+    </div>
+
+<script>
+    const palette = [
+        '#ef4444', // Punainen
+        '#3b82f6', // Sininen
+        '#10b981', // Vihreä
+        '#f59e0b', // Keltainen
+        '#ec4899', // Vaaleanpunainen
+        '#8b5cf6', // Violetti
+        '#06b6d4'  // Syaani
+    ];
+
+    let currentLevel = parseInt(localStorage.getItem('colorLabLevel')) || 1;
+    let tubes = [];
+    let initialTubes = [];
+    let selectedTubeIndex = null;
+    const CAPACITY = 4; // Max 4 lohkoa per putki
+
+    // Generoi aina täysin uudenlaisen tason tasoluvun mukaan
+    function generateLevel(lvl) {
+        // Tasoilla vaihtelee värien määrä (2 - 6 väriä) ja putkien määrä
+        let colorCount = Math.min(2 + Math.floor((lvl - 1) / 2), palette.length - 1);
+        let filledTubesCount = colorCount;
+        let emptyTubesCount = lvl % 2 === 0 ? 2 : 1; // Vaihtelee tyhjien putkien määrää, tekee jokaisesta tasosta erilaisen rakenteen
+        let totalTubes = filledTubesCount + emptyTubesCount;
+
+        let pool = [];
+        // Luodaan värit
+        for (let c = 0; c < colorCount; c++) {
+            for (let i = 0; i < CAPACITY; i++) {
+                pool.push(c);
+            }
+        }
+        // Sekoitetaan värit täysin satunnaisesti putkiin
+        pool.sort(() => Math.random() - 0.5);
+
+        let generatedTubes = [];
+        for (let i = 0; i < filledTubesCount; i++) {
+            let tube = [];
+            for (let j = 0; j < CAPACITY; j++) {
+                tube.push(pool.pop());
+            }
+            generatedTubes.push(tube);
+        }
+
+        // Lisätään tyhjät putket
+        for (let i = 0; i < emptyTubesCount; i++) {
+            generatedTubes.push([]);
+        }
+
+        // Varmistetaan ettei taso ala valmiiksi ratkaistuna
+        if (isAlreadySolved(generatedTubes)) {
+            return generateLevel(lvl); // Generoi uudelleen jos vahingossa tuli ratkaistu
+        }
+
+        return generatedTubes;
+    }
+
+    function isAlreadySolved(tubeList) {
+        let solved = true;
+        tubeList.forEach(t => {
+            if (t.length > 0) {
+                if (t.length !== CAPACITY) solved = false;
+                let first = t[0];
+                if (!t.every(item => item === first)) solved = false;
+            }
+        });
+        return solved;
+    }
+
+    function initLevel() {
+        tubes = generateLevel(currentLevel);
+        initialTubes = JSON.parse(JSON.stringify(tubes));
+        selectedTubeIndex = null;
+
+        document.getElementById('levelText').innerText = `Taso ${currentLevel}`;
+        
+        // Vaihdellaan dynaamisia tehtäväkuvauksia fiiliksen mukaan
+        const missions = [
+            "Erota eri värit omiin koeputkiinsa!",
+            "Siirrä nesteet puhtaisiin astioihin!",
+            "Puhdista laboratorio lajittelemalla värit!",
+            "Järjestä kemikaalit oikeisiin pulloihin!"
+        ];
+        document.getElementById('missionText').innerText = missions[(currentLevel - 1) % missions.length];
+        document.getElementById('winScreen').style.display = 'none';
+
+        renderBoard();
+    }
+
+    function renderBoard() {
+        const boardEl = document.getElementById('gameBoard');
+        boardEl.innerHTML = '';
+
+        tubes.forEach((tube, index) => {
+            const tubeEl = document.createElement('div');
+            tubeEl.classList.add('tube');
+            if (selectedTubeIndex === index) {
+                tubeEl.classList.add('selected');
+            }
+            tubeEl.onclick = () => handleTubeClick(index);
+
+            tube.forEach(colorIdx => {
+                const block = document.createElement('div');
+                block.classList.add('liquid-block');
+                block.style.backgroundColor = palette[colorIdx];
+                tubeEl.appendChild(block);
+            });
+
+            boardEl.appendChild(tubeEl);
+        });
+    }
+
+    function handleTubeClick(index) {
+        if (selectedTubeIndex === null) {
+            // Valitse putki vain jos siinä on jotain siirrettävää
+            if (tubes[index].length > 0) {
+                selectedTubeIndex = index;
+                renderBoard();
+            }
+        } else {
+            if (selectedTubeIndex === index) {
+                // Peruuta valinta napauttamalla samaa uudestaan
+                selectedTubeIndex = null;
+                renderBoard();
             } else {
-                clearInterval(interval);
-                setTimeout(() => {
-                    tiles.forEach(t => {
-                        t.style.borderColor = 'rgba(255,255,255,0.1)';
-                        t.style.filter = 'brightness(1)';
-                    });
-                    isShowingSequence = false;
-                    messageText.innerText = 'Sinun vuorosi!';
-                }, 400);
+                // Yritä kaataa nestettä valitusta putkesta tähän putkeen
+                pourLiquid(selectedTubeIndex, index);
+                selectedTubeIndex = null;
+                renderBoard();
+                checkWin();
             }
-        }, 700);
-    }
-
-    function handleTileClick(index) {
-        if (!isPlaying && sequence.length === 0) return;
-        if (isShowingSequence) return;
-
-        const tiles = document.querySelectorAll('.tile');
-        
-        // Välähdys klikatessa
-        tiles[index].style.filter = 'brightness(1.4)';
-        setTimeout(() => {
-            tiles[index].style.filter = 'brightness(1)';
-        }, 150);
-
-        playerSequence.push(index);
-        const currentIndex = playerSequence.length - 1;
-
-        // Tarkistetaanko meniikö oikein
-        if (playerSequence[currentIndex] !== sequence[currentIndex]) {
-            gameOver();
-            return;
-        }
-
-        // Jos sarja suoritettu loppuun tältä tasolta
-        if (playerSequence.length === sequence.length) {
-            messageText.innerText = 'Hienoa! Seuraava taso...';
-            level++;
-            
-            if (level > bestLevel) {
-                bestLevel = level;
-                localStorage.setItem('colorPuzzleBest', bestLevel);
-                bestText.innerText = `Ennätys: ${bestLevel}`;
-            }
-
-            setTimeout(nextLevel, 1000);
         }
     }
 
-    function gameOver() {
-        messageText.innerText = `Peli ohi! Pääsit tasolle ${level}`;
-        actionBtn.innerText = 'Pelaa uudelleen';
-        actionBtn.style.display = 'block';
-        sequence = [];
+    function pourLiquid(fromIdx, toIdx) {
+        let sourceTube = tubes[fromIdx];
+        let targetTube = tubes[toIdx];
+
+        if (sourceTube.length === 0) return;
+        if (targetTube.length >= CAPACITY) return; // Kohdeputki täynnä
+
+        let colorToMove = sourceTube[sourceTube.length - 1];
+
+        // Jos kohdeputki ei ole tyhjä, päällimmäisen värin täytyy täsmätä
+        if (targetTube.length > 0) {
+            let targetTopColor = targetTube[targetTube.length - 1];
+            if (targetTopColor !== colorToMove) return;
+        }
+
+        // Siirretään kaikki samanväriset peräkkäiset lohkot kerralla
+        let countToMove = 0;
+        for (let i = sourceTube.length - 1; i >= 0; i--) {
+            if (sourceTube[i] === colorToMove) {
+                countToMove++;
+            } else {
+                break;
+            }
+        }
+
+        // Tarkistetaan tila kohdeputkessa
+        let spaceLeft = CAPACITY - targetTube.length;
+        let actualMoveCount = Math.min(countToMove, spaceLeft);
+
+        for (let i = 0; i < actualMoveCount; i++) {
+            sourceTube.pop();
+            targetTube.push(colorToMove);
+        }
     }
 
-    // Alustetaan ruudukko valmiiksi
-    createGrid();
+    function checkWin() {
+        let won = true;
+        tubes.forEach(tube => {
+            if (tube.length > 0) {
+                if (tube.length !== CAPACITY) won = false;
+                let firstColor = tube[0];
+                if (!tube.every(c => c === firstColor)) won = false;
+            }
+        });
+
+        if (won) {
+            document.getElementById('winReasonText').innerText = `Läpäisit tason ${currentLevel} loistavasti!`;
+            document.getElementById('winScreen').style.display = 'flex';
+        }
+    }
+
+    function resetLevel() {
+        tubes = JSON.parse(JSON.stringify(initialTubes));
+        selectedTubeIndex = null;
+        renderBoard();
+    }
+
+    function nextLevel() {
+        currentLevel++;
+        localStorage.setItem('colorLabLevel', currentLevel);
+        initLevel();
+    }
+
+    // Käynnistä peli
+    initLevel();
 </script>
 
 </body>
