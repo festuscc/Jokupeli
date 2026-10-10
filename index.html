@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shadow Delivery - Cyberpunk Edition</title>
+    <title>Shadow Delivery - Ultimate Edition</title>
     <style>
         * {
             box-sizing: border-box;
@@ -28,20 +28,19 @@
             position: relative;
             width: 400px;
             height: 600px;
-            box-shadow: 0 0 40px rgba(0, 240, 255, 0.15);
+            box-shadow: 0 0 40px rgba(0, 240, 255, 0.2);
             border-radius: 16px;
             overflow: hidden;
             background: #090916;
-            border: 2px solid rgba(0, 240, 255, 0.2);
+            border: 2px solid rgba(0, 240, 255, 0.3);
         }
         canvas {
             display: block;
         }
-        /* HTML-pohjaiset tyylikkäät UI-kerrokset */
         .overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 5, 10, 0.92);
+            background: rgba(5, 5, 10, 0.94);
             backdrop-filter: blur(8px);
             display: flex;
             flex-direction: column;
@@ -56,31 +55,30 @@
         }
         h1 {
             color: #00f0ff;
-            font-size: 28px;
-            margin: 0 0 10px 0;
+            font-size: 26px;
+            margin: 0 0 8px 0;
             text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
-            letter-spacing: 2px;
+            letter-spacing: 1px;
         }
         p {
-            color: #94a3b8;
-            font-size: 14px;
-            margin: 0 0 20px 0;
-            line-height: 1.5;
+            color: #cbd5e1;
+            font-size: 13px;
+            margin: 0 0 15px 0;
+            line-height: 1.4;
         }
         .btn {
             background: linear-gradient(135deg, #00f0ff, #0077ff);
             color: #000;
             border: none;
-            padding: 14px 28px;
-            font-size: 16px;
+            padding: 12px 24px;
+            font-size: 15px;
             font-weight: bold;
             border-radius: 12px;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(0, 240, 255, 0.4);
-            margin: 8px 0;
+            margin: 6px 0;
             width: 100%;
             max-width: 280px;
-            transition: transform 0.1s;
         }
         .btn:active {
             transform: scale(0.96);
@@ -95,29 +93,26 @@
             gap: 8px;
             width: 100%;
             max-width: 280px;
-            margin: 10px 0;
+            margin: 8px 0;
         }
         input {
             flex: 1;
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 12px;
+            padding: 10px;
             border-radius: 8px;
             color: #fff;
             font-size: 14px;
             outline: none;
             text-align: center;
         }
-        input:focus {
-            border-color: #00f0ff;
-        }
         .shop-grid {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
             width: 100%;
             max-width: 280px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
     </style>
 </head>
@@ -129,43 +124,44 @@
     <!-- TUTORIAL / ALOITUS -->
     <div id="tutorialScreen" class="overlay">
         <h1>SHADOW DELIVERY</h1>
-        <p>Hiivi futuristisessa kaupungissa, vältä vartijoiden valoja, kerää paketit ja pakene maaliin!</p>
-        <button class="btn" onclick="startGame()">ALOITA PELI</button>
+        <p><b>Tervetuloa tutoriaaliin!</b><br>1. Ohjaa hahmoa raahaamalla näyttöä.<br>2. Vältä vartijoiden valoja (valot eivät näy seinien läpi!).<br>3. Kerää kaikki paketit ja siirry vihreään maaliin.</p>
+        <button class="btn" onclick="setMode('classic')">Klassinen pelimuoto</button>
+        <button class="btn btn-secondary" onclick="setMode('speedrun')">Aika-ajo (Speedrun)</button>
     </div>
 
-    <!-- KAUPPA / TASOJEN VÄLI -->
+    <!-- KAUPPA -->
     <div id="shopScreen" class="overlay hidden">
-        <h1>MUSTAN PÖRSSIN KAUPPA</h1>
+        <h1>KAUPPA & PÄIVITYKSET</h1>
         <p id="shopCoins">Kolikot: 🪙 0</p>
         
         <div class="shop-grid">
             <button class="btn" id="speedBtn" onclick="buySpeed()">Päivitä nopeus (25🪙)</button>
+            <button class="btn" id="lifeBtn" onclick="buyLife()">Osta lisäelämä (50🪙)</button>
             <button class="btn btn-secondary" onclick="buySkin('neon')">Neon Vihreä (50🪙)</button>
             <button class="btn btn-secondary" onclick="buySkin('gold')">Kultainen (100🪙)</button>
-            <button class="btn btn-secondary" onclick="buySkin('ninja')">Cyber-Ninja (150🪙)</button>
             <button class="btn btn-secondary" style="background: linear-gradient(135deg, #d4a373, #bc6c25);" onclick="buySkin('nakkari')">Näkkäri 🍞 (250🪙)</button>
         </div>
 
         <div class="input-group">
             <input type="text" id="adminCodeInput" placeholder="Admin-koodi">
-            <button class="btn" style="width: auto; padding: 0 16px;" onclick="checkAdminCode()">OK</button>
+            <button class="btn" style="width: auto; padding: 0 14px;" onclick="checkAdminCode()">OK</button>
         </div>
 
-        <button class="btn" style="background: #10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" onclick="nextLevel()">JATKA SEURAAVAAN TASOON</button>
+        <button class="btn" style="background: #10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" onclick="nextLevel()">JATKA SEURAAVAAN</button>
     </div>
 
     <!-- GAME OVER -->
     <div id="gameOverScreen" class="overlay hidden">
         <h1 style="color: #ff0055;">VALO OSUI!</h1>
-        <p>Vartija havaitsi sinut. Kokeile uudelleen!</p>
+        <p>Vartija havaitsi sinut.</p>
         <button class="btn" onclick="retryLevel()">YRITÄ UUDELLEEN</button>
     </div>
 
     <!-- WIN SCREEN -->
     <div id="winScreen" class="overlay hidden">
-        <h1 style="color: #10b981;">TEHTÄVÄ SUORITETTU!</h1>
-        <p>Läpäisit kaikki pääsyn haasteet! Olet todellinen varjokuriiri.</p>
-        <button class="btn" onclick="restartGame()">PELAA UUDESTAAN</button>
+        <h1 style="color: #10b981;">MAHTAVAA!</h1>
+        <p id="winText">Taso läpäisty!</p>
+        <button class="btn" onclick="openShopFromWin()">JATKA</button>
     </div>
 </div>
 
@@ -176,16 +172,19 @@ const ctx = canvas.getContext('2d');
 const WIDTH = 400;
 const HEIGHT = 600;
 
-// Tallennusmuuttujat
 let level = parseInt(localStorage.getItem('sd_level')) || 1;
 let coins = parseInt(localStorage.getItem('sd_coins')) || 0;
 let speedLevel = parseInt(localStorage.getItem('sd_speedLvl')) || 1;
+let extraLives = parseInt(localStorage.getItem('sd_lives')) || 0;
 let unlockedSkins = JSON.parse(localStorage.getItem('sd_skins')) || ['default'];
 let equippedSkin = localStorage.getItem('sd_equipped') || 'default';
+let gameMode = 'classic'; // 'classic' tai 'speedrun'
+let speedrunTime = 30; // 30 sekuntia aika-ajossa
+let timerInterval = null;
 
 let player = {
-    x: 50, y: 520, radius: 12,
-    get speed() { return 2.6 + (speedLevel * 0.35); }
+    x: 50, y: 540, radius: 12,
+    get speed() { return 2.4 + (speedLevel * 0.3); }
 };
 
 let joystick = {
@@ -196,85 +195,99 @@ let joystick = {
 let walls = [];
 let guards = [];
 let packages = [];
-let exitZone = { x: 330, y: 520, radius: 24, active: false };
+let exitZone = { x: 330, y: 540, radius: 24, active: false };
 
 const skins = {
     'default': { name: 'Perus Sininen', color: '#00f0ff' },
     'neon': { name: 'Neon Vihreä', color: '#10b981', price: 50 },
     'gold': { name: 'Kultainen', color: '#f59e0b', price: 100 },
-    'ninja': { name: 'Cyber-Ninja', color: '#a855f7', price: 150 },
     'nakkari': { name: 'Näkkäri 🍞', color: '#d4a373', price: 250 }
 };
-
-// Tasokohtaiset taustavärit ja teemat
-const levelThemes = [
-    { bg: '#090916', grid: 'rgba(0, 240, 255, 0.03)', wall: '#1e1b4b', border: '#312e81' },
-    { bg: '#110516', grid: 'rgba(255, 0, 127, 0.03)', wall: '#4a044e', border: '#701a75' },
-    { bg: '#022c22', grid: 'rgba(16, 185, 129, 0.03)', wall: '#064e3b', border: '#065f46' },
-    { bg: '#2e1065', grid: 'rgba(168, 85, 247, 0.03)', wall: '#581c87', border: '#6b21a8' },
-    { bg: '#451a03', grid: 'rgba(245, 158, 11, 0.03)', wall: '#78350f', border: '#92400e' }
-];
 
 function saveGame() {
     localStorage.setItem('sd_level', level);
     localStorage.setItem('sd_coins', coins);
     localStorage.setItem('sd_speedLvl', speedLevel);
+    localStorage.setItem('sd_lives', extraLives);
     localStorage.setItem('sd_skins', JSON.stringify(unlockedSkins));
     localStorage.setItem('sd_equipped', equippedSkin);
 }
 
-// Generoi aina täysin uuden tason
-function generateLevel(lvl) {
+// Pseudorandom seedillä varmistetaan, että sama taso näyttää aina täsmälleen samalta
+function seededRandom(seed) {
+    let x = Math.sin(seed++) * 10000;
+    return x - Math.floor(x);
+}
+
+function loadLevel(lvl) {
     walls = [];
     guards = [];
     packages = [];
+    
+    let isBoss = (lvl % 10 === 0);
+    let seed = lvl * 1337;
 
-    // Kasvava vaikeustaso ja dynaamiset rakenteet
-    let wallCount = 2 + Math.floor(lvl / 2);
-    for (let i = 0; i < wallCount; i++) {
-        let w = 70 + Math.random() * 80;
-        let h = 20;
-        let x = 30 + Math.random() * (WIDTH - w - 60);
-        let y = 100 + i * (350 / wallCount) + Math.random() * 40;
-        walls.push({ x, y, w, h });
+    // Kunnon rakennukset ja seinät (varmistetaan ettei paketit ole maalin lähellä)
+    walls = [
+        { x: 60, y: 140, w: 120, h: 24 },
+        { x: 220, y: 260, w: 120, h: 24 },
+        { x: 100, y: 380, w: 200, h: 24 }
+    ];
+    if (lvl > 2) {
+        walls.push({ x: 50, y: 240, w: 24, h: 100 });
+        walls.push({ x: 320, y: 140, w: 24, h: 120 });
     }
 
-    let guardCount = Math.min(1 + Math.floor(lvl / 2), 5);
+    // Vartijoiden määrä (hidastetut ja turvalliset nopeudet)
+    let guardCount = isBoss ? 6 : Math.min(1 + Math.floor(lvl / 2), 4);
     for (let i = 0; i < guardCount; i++) {
         guards.push({
-            x: 60 + Math.random() * 280,
-            y: 90 + i * 90,
-            vx: (Math.random() > 0.5 ? 1.5 : -1.5) * (1 + lvl * 0.08),
-            vy: lvl > 3 && i % 2 === 0 ? (Math.random() > 0.5 ? 1 : -1) * 1.2 : 0,
-            minX: 30, maxX: 370,
-            minY: 80, maxY: 480,
+            x: 80 + (i * 70) % 260,
+            y: 90 + (i * 80) % 280,
+            vx: (i % 2 === 0 ? 1.1 : -1.1) * (isBoss ? 1.4 : 1.0),
+            vy: lvl > 4 && i % 3 === 0 ? 0.8 : 0,
+            minX: 40, maxX: 360,
+            minY: 80, maxY: 460,
             radius: 10,
-            angle: Math.random() * Math.PI * 2,
-            spread: 0.5 + Math.min(lvl * 0.02, 0.3),
-            length: 100 + Math.min(lvl * 5, 40),
-            color: ['#ff0055', '#ff9900', '#bf00ff', '#00ffcc'][i % 4]
+            angle: i * (Math.PI / 2),
+            spread: 0.45,
+            length: 110,
+            color: isBoss ? '#ff0055' : '#ff9900'
         });
     }
 
-    let pkgCount = Math.min(1 + Math.floor(lvl / 3), 3);
+    // Paketit (määrä ja sijainti suhteessa tasoon, ei koskaan maalin vieressä)
+    let pkgCount = Math.min(1 + Math.floor(lvl / 4), 3);
     for (let i = 0; i < pkgCount; i++) {
-        packages.push({
-            x: 60 + Math.random() * 280,
-            y: 70 + Math.random() * 400,
-            radius: 11,
-            collected: false
-        });
+        let px = 80 + (seededRandom(seed + i) * 220);
+        let py = 70 + (seededRandom(seed + i + 50) * 250);
+        // Varmistetaan ettei paketti ole lähellä aloitusta tai maalia (330, 540)
+        if (Math.hypot(px - 330, py - 540) < 100) px = 100;
+        packages.push({ x: px, y: py, radius: 11, collected: false });
     }
 
     exitZone = { x: 330, y: 540, radius: 24, active: false };
     player.x = 50; 
-    player.y = 550;
+    player.y = 540;
+
+    if (gameMode === 'speedrun') {
+        speedrunTime = Math.max(15, 35 - lvl);
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            speedrunTime--;
+            if (speedrunTime <= 0) {
+                clearInterval(timerInterval);
+                document.getElementById('gameOverScreen').classList.remove('hidden');
+                joystick.active = false;
+            }
+        }, 1000);
+    }
 }
 
-// UI-toiminnot
-function startGame() {
+function setMode(mode) {
+    gameMode = mode;
     document.getElementById('tutorialScreen').classList.add('hidden');
-    generateLevel(level);
+    loadLevel(level);
     requestAnimationFrame(loop);
 }
 
@@ -282,25 +295,20 @@ function nextLevel() {
     level++;
     saveGame();
     document.getElementById('shopScreen').classList.add('hidden');
-    generateLevel(level);
+    loadLevel(level);
+}
+
+function openShopFromWin() {
+    document.getElementById('winScreen').classList.add('hidden');
+    document.getElementById('shopCoins').innerText = `Kolikot: 🪙 ${coins}`;
+    document.getElementById('speedBtn').innerText = `Päivitä nopeus (Taso ${speedLevel}): ${speedLevel * 25}🪙`;
+    document.getElementById('lifeBtn').innerText = `Lisäelämät: ${extraLives} (Osta 50🪙)`;
+    document.getElementById('shopScreen').classList.remove('hidden');
 }
 
 function retryLevel() {
     document.getElementById('gameOverScreen').classList.add('hidden');
-    generateLevel(level);
-}
-
-function restartGame() {
-    level = 1;
-    saveGame();
-    document.getElementById('winScreen').classList.add('hidden');
-    generateLevel(level);
-}
-
-function openShop() {
-    document.getElementById('shopCoins').innerText = `Kolikot: 🪙 ${coins}`;
-    document.getElementById('speedBtn').innerText = `Päivitä nopeus (Taso ${speedLevel}): ${speedLevel * 25}🪙`;
-    document.getElementById('shopScreen').classList.remove('hidden');
+    loadLevel(level);
 }
 
 function buySpeed() {
@@ -309,9 +317,20 @@ function buySpeed() {
         coins -= cost;
         speedLevel++;
         saveGame();
-        openShop();
+        openShopFromWin();
     } else {
         alert("Ei tarpeeksi kolikoita!");
+    }
+}
+
+function buyLife() {
+    if (coins >= 50) {
+        coins -= 50;
+        extraLives++;
+        saveGame();
+        openShopFromWin();
+    } else {
+        alert("Ei tarpeeksi kolikoita! (Vaatii 50🪙)");
     }
 }
 
@@ -320,14 +339,14 @@ function buySkin(skinKey) {
     if (unlockedSkins.includes(skinKey)) {
         equippedSkin = skinKey;
         saveGame();
-        alert(`Otettu käyttöön: ${skin.name}`);
+        alert(`Käytössä: ${skin.name}`);
     } else if (coins >= skin.price) {
         coins -= skin.price;
         unlockedSkins.push(skinKey);
         equippedSkin = skinKey;
         saveGame();
-        openShop();
-        alert(`Ostettu ja otettu käyttöön: ${skin.name}!`);
+        openShopFromWin();
+        alert(`Ostettu: ${skin.name}!`);
     } else {
         alert("Ei tarpeeksi kolikoita!");
     }
@@ -339,19 +358,19 @@ function checkAdminCode() {
         if (!unlockedSkins.includes('nakkari')) unlockedSkins.push('nakkari');
         equippedSkin = 'nakkari';
         saveGame();
-        openShop();
-        alert("Admin-koodi hyväksytty! Legendaarinen Näkkäri-skini avattu! 🍞🔥");
+        openShopFromWin();
+        alert("Admin-koodi hyväksytty! Näkkäri-skini avattu! 🍞");
         document.getElementById('adminCodeInput').value = '';
     } else {
         alert("Väärä koodi!");
     }
 }
 
-// Touch / Joystick tapahtumat
+// Kosketus / Joystick
 canvas.addEventListener('pointerdown', (e) => {
     const rect = canvas.getBoundingClientRect();
-    const clientX = e.clientX - rect.left;
-    const clientY = e.clientY - rect.top;
+    let clientX = e.clientX - rect.left;
+    let clientY = e.clientY - rect.top;
 
     if (!joystick.active) {
         joystick.active = true;
@@ -369,8 +388,8 @@ canvas.addEventListener('pointerdown', (e) => {
 canvas.addEventListener('pointermove', (e) => {
     if (!joystick.active || e.pointerId !== joystick.pointerId) return;
     const rect = canvas.getBoundingClientRect();
-    const clientX = e.clientX - rect.left;
-    const clientY = e.clientY - rect.top;
+    let clientX = e.clientX - rect.left;
+    let clientY = e.clientY - rect.top;
 
     let dx = clientX - joystick.startX;
     let dy = clientY - joystick.startY;
@@ -412,7 +431,39 @@ function checkWallCollision(nx, ny) {
     return false;
 }
 
+// Raycasting: Tarkistaa näkeekö vartija pelaajan (valokeila pysähtyy seiniin)
+function guardCanSeePlayer(g) {
+    let dx = player.x - g.x;
+    let dy = player.y - g.y;
+    let dist = Math.hypot(dx, dy);
+
+    if (dist > g.length) return false;
+
+    let angleToPlayer = Math.atan2(dy, dx);
+    let angleDiff = Math.abs(normalizeAngle(angleToPlayer - g.angle));
+    if (angleDiff > g.spread / 2) return false;
+
+    // Tarkistetaan osuuko seinä vartijan ja pelaajan väliin
+    for (let w of walls) {
+        // Yksinkertaistettu säteen tarkistus seinää vasten
+        let steps = 10;
+        for (let s = 1; s < steps; s++) {
+            let checkX = g.x + (dx * (s / steps));
+            let checkY = g.y + (dy * (s / steps));
+            if (checkX >= w.x && checkX <= w.x + w.w && checkY >= w.y && checkY <= w.y + w.h) {
+                return false; // Seinä estää näkyvyyden!
+            }
+        }
+    }
+    return true;
+}
+
 function update() {
+    if (document.getElementById('tutorialScreen').classList.contains('hidden') === false) return;
+    if (document.getElementById('shopScreen').classList.contains('hidden') === false) return;
+    if (document.getElementById('gameOverScreen').classList.contains('hidden') === false) return;
+    if (document.getElementById('winScreen').classList.contains('hidden') === false) return;
+
     if (joystick.active) {
         let nextX = player.x + joystick.forceX * player.speed;
         let nextY = player.y + joystick.forceY * player.speed;
@@ -424,7 +475,6 @@ function update() {
     player.x = Math.max(player.radius, Math.min(WIDTH - player.radius, player.x));
     player.y = Math.max(player.radius, Math.min(HEIGHT - player.radius, player.y));
 
-    // Vartijoiden liike ja kulmat
     guards.forEach(g => {
         g.x += g.vx;
         if (g.x < g.minX || g.x > g.maxX) g.vx *= -1;
@@ -432,23 +482,21 @@ function update() {
             g.y += g.vy;
             if (g.y < g.minY || g.y > g.maxY) g.vy *= -1;
         }
-        g.angle += 0.025;
+        g.angle += 0.015;
 
-        let dx = player.x - g.x;
-        let dy = player.y - g.y;
-        let dist = Math.hypot(dx, dy);
-
-        if (dist < g.length) {
-            let angleToPlayer = Math.atan2(dy, dx);
-            let angleDiff = Math.abs(normalizeAngle(angleToPlayer - g.angle));
-            if (angleDiff < g.spread / 2) {
+        if (guardCanSeePlayer(g)) {
+            if (extraLives > 0) {
+                extraLives--;
+                saveGame();
+                player.x = 50; player.y = 540; // Turvaan
+            } else {
+                clearInterval(timerInterval);
                 document.getElementById('gameOverScreen').classList.remove('hidden');
                 joystick.active = false;
             }
         }
     });
 
-    // Paketit
     packages.forEach(pkg => {
         if (!pkg.collected) {
             let dist = Math.hypot(player.x - pkg.x, player.y - pkg.y);
@@ -463,16 +511,13 @@ function update() {
         }
     });
 
-    // Maaliin pääsy -> Avaa kauppa
     let allCollected = packages.every(p => p.collected);
     if (allCollected && exitZone.active) {
         let distToExit = Math.hypot(player.x - exitZone.x, player.y - exitZone.y);
         if (distToExit < player.radius + exitZone.radius) {
-            if (level >= 5) {
-                document.getElementById('winScreen').classList.remove('hidden');
-            } else {
-                openShop();
-            }
+            clearInterval(timerInterval);
+            document.getElementById('winText').innerText = `Taso ${level} läpäisty!`;
+            document.getElementById('winScreen').classList.remove('hidden');
         }
     }
 }
@@ -484,24 +529,12 @@ function normalizeAngle(angle) {
 }
 
 function draw() {
-    let theme = levelThemes[(level - 1) % levelThemes.length];
-
-    // Tausta ja ruudukko
-    ctx.fillStyle = theme.bg;
+    ctx.fillStyle = '#090916';
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-    ctx.strokeStyle = theme.grid;
-    ctx.lineWidth = 1;
-    for (let x = 0; x < WIDTH; x += 30) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, HEIGHT); ctx.stroke();
-    }
-    for (let y = 0; y < HEIGHT; y += 30) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(WIDTH, y); ctx.stroke();
-    }
-
-    // Seinät
-    ctx.fillStyle = theme.wall;
-    ctx.strokeStyle = theme.border;
+    // Kunnon rakennukset ja seinät
+    ctx.fillStyle = '#1e1b4b';
+    ctx.strokeStyle = '#3b82f6';
     ctx.lineWidth = 2;
     walls.forEach(w => {
         ctx.fillRect(w.x, w.y, w.w, w.h);
@@ -538,7 +571,7 @@ function draw() {
 
     // Maali
     let allCollected = packages.every(p => p.collected);
-    ctx.fillStyle = allCollected ? '#10b981' : '#27272a';
+    ctx.fillStyle = allCollected ? '#10b981' : '#334155';
     ctx.shadowBlur = allCollected ? 15 : 0;
     ctx.shadowColor = '#10b981';
     ctx.beginPath();
@@ -546,13 +579,13 @@ function draw() {
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Pelaaja ja skinit
+    // Pelaaja ja skinit (Näkkäri on suorakulmio / leipä)
     let skinColor = skins[equippedSkin].color;
     ctx.fillStyle = skinColor;
     ctx.shadowBlur = 15;
     ctx.shadowColor = skinColor;
     if (equippedSkin === 'nakkari') {
-        ctx.fillRect(player.x - player.radius, player.y - player.radius, player.radius * 2, player.radius * 2);
+        ctx.fillRect(player.x - 16, player.y - 10, 32, 20);
     } else {
         ctx.beginPath();
         ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
@@ -566,7 +599,7 @@ function draw() {
         ctx.arc(joystick.startX, joystick.startY, joystick.radius, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
         ctx.fill();
-        ctx.strokeStyle = 'rgba(0, 240, 255, 0.2)';
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
         ctx.stroke();
 
         ctx.beginPath();
@@ -579,15 +612,4 @@ function draw() {
     ctx.fillStyle = '#f8fafc';
     ctx.font = 'bold 15px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(`Taso: ${level}/5 | 🪙 ${coins}`, 20, 30);
-}
-
-function loop() {
-    update();
-    draw();
-    requestAnimationFrame(loop);
-}
-</script>
-
-</body>
-</html>
+    let levelText = (level % 10 === 0) ? `BOSS-Taso ${level}` : 
