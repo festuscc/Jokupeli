@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Väripulma</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0f172a;
+            color: #f8fafc;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .game-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            background: #1e293b;
+            padding: 12px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            width: 100%;
+            max-width: 320px;
+            margin-bottom: 20px;
+        }
+        .tile {
+            aspect-ratio: 1;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: transform 0.1s ease, filter 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 3px solid rgba(255,255,255,0.1);
+        }
+        .tile:active {
+            transform: scale(0.92);
+        }
+        .message {
+            font-size: 16px;
+            color: #94a3b8;
+            height: 24px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+            transition: background 0.2s, transform 0.1s;
+        }
+        .btn:active {
+            transform: scale(0.96);
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="header">
+        <span id="scoreText">Taso: 1</span>
+        <span id="bestText">Ennätys: 1</span>
+    </div>
+
+    <div class="message" id="messageText">Klikkaa värejä järjestyksessä!</div>
+
+    <div class="grid" id="puzzleGrid"></div>
+
+    <button class="btn" id="actionBtn" onclick="startGame()">Aloita peli</button>
+</div>
+
+<script>
+    // Väripaletti pulmapeliin
+    const colors = [
+        '#ef4444', // Punainen
+        '#3b82f6', // Sininen
+        '#10b981', // Vihreä
+        '#f59e0b', // Keltainen
+        '#8b5cf6', // Violetti
+        '#ec4899'  // Vaaleanpunainen
+    ];
+
+    let level = 1;
+    let bestLevel = localStorage.getItem('colorPuzzleBest') || 1;
+    let sequence = [];
+    let playerSequence = [];
+    let isPlaying = false;
+    let isShowingSequence = false;
+
+    const gridEl = document.getElementById('puzzleGrid');
+    const scoreText = document.getElementById('scoreText');
+    const bestText = document.getElementById('bestText');
+    const messageText = document.getElementById('messageText');
+    const actionBtn = document.getElementById('actionBtn');
+
+    bestText.innerText = `Ennätys: ${bestLevel}`;
+
+    // Luodaan pelilaudalle 6 nappia
+    function createGrid() {
+        gridEl.innerHTML = '';
+        for (let i = 0; i < 6; i++) {
+            const tile = document.createElement('div');
+            tile.classList.add('tile');
+            tile.style.backgroundColor = colors[i];
+            tile.dataset.index = i;
+            tile.addEventListener('click', () => handleTileClick(i));
+            gridEl.appendChild(tile);
+        }
+    }
+
+    function startGame() {
+        level = 1;
+        sequence = [];
+        actionBtn.style.display = 'none';
+        nextLevel();
+    }
+
+    function nextLevel() {
+        playerSequence = [];
+        scoreText.innerText = `Taso: ${level}`;
+        messageText.innerText = 'Katso sarja...';
+        
+        // Lisätään sarjaan uusi satunnainen väri (0-5)
+        sequence.push(Math.floor(Math.random() * 6));
+        
+        showSequence();
+    }
+
+    function showSequence() {
+        isShowingSequence = true;
+        let i = 0;
+        const tiles = document.querySelectorAll('.tile');
+
+        const interval = setInterval(() => {
+            // Palautetaan kaikkien reunat normaaliksi
+            tiles.forEach(t => t.style.borderColor = 'rgba(255,255,255,0.1)');
+            tiles.forEach(t => t.style.filter = 'brightness(1)');
+
+            if (i < sequence.length) {
+                let activeTile = tiles[sequence[i]];
+                activeTile.style.borderColor = '#ffffff';
+                activeTile.style.filter = 'brightness(1.5)';
+                i++;
+            } else {
+                clearInterval(interval);
+                setTimeout(() => {
+                    tiles.forEach(t => {
+                        t.style.borderColor = 'rgba(255,255,255,0.1)';
+                        t.style.filter = 'brightness(1)';
+                    });
+                    isShowingSequence = false;
+                    messageText.innerText = 'Sinun vuorosi!';
+                }, 400);
+            }
+        }, 700);
+    }
+
+    function handleTileClick(index) {
+        if (!isPlaying && sequence.length === 0) return;
+        if (isShowingSequence) return;
+
+        const tiles = document.querySelectorAll('.tile');
+        
+        // Välähdys klikatessa
+        tiles[index].style.filter = 'brightness(1.4)';
+        setTimeout(() => {
+            tiles[index].style.filter = 'brightness(1)';
+        }, 150);
+
+        playerSequence.push(index);
+        const currentIndex = playerSequence.length - 1;
+
+        // Tarkistetaanko meniikö oikein
+        if (playerSequence[currentIndex] !== sequence[currentIndex]) {
+            gameOver();
+            return;
+        }
+
+        // Jos sarja suoritettu loppuun tältä tasolta
+        if (playerSequence.length === sequence.length) {
+            messageText.innerText = 'Hienoa! Seuraava taso...';
+            level++;
+            
+            if (level > bestLevel) {
+                bestLevel = level;
+                localStorage.setItem('colorPuzzleBest', bestLevel);
+                bestText.innerText = `Ennätys: ${bestLevel}`;
+            }
+
+            setTimeout(nextLevel, 1000);
+        }
+    }
+
+    function gameOver() {
+        messageText.innerText = `Peli ohi! Pääsit tasolle ${level}`;
+        actionBtn.innerText = 'Pelaa uudelleen';
+        actionBtn.style.display = 'block';
+        sequence = [];
+    }
+
+    // Alustetaan ruudukko valmiiksi
+    createGrid();
+</script>
+
+</body>
+</html>
