@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shadow Delivery - Ultimate Edition</title>
+    <title>Shadow Delivery - Cyberpunk Edition</title>
     <style>
         * {
             box-sizing: border-box;
@@ -14,8 +14,8 @@
         body {
             margin: 0;
             padding: 0;
-            background: #09090b;
-            color: #f4f4f5;
+            background: #05050a;
+            color: #f8fafc;
             font-family: system-ui, -apple-system, sans-serif;
             display: flex;
             flex-direction: column;
@@ -24,17 +24,150 @@
             height: 100vh;
             overflow: hidden;
         }
+        #gameContainer {
+            position: relative;
+            width: 400px;
+            height: 600px;
+            box-shadow: 0 0 40px rgba(0, 240, 255, 0.15);
+            border-radius: 16px;
+            overflow: hidden;
+            background: #090916;
+            border: 2px solid rgba(0, 240, 255, 0.2);
+        }
         canvas {
-            background: #121215;
             display: block;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+        }
+        /* HTML-pohjaiset tyylikkäät UI-kerrokset */
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 5, 10, 0.92);
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            z-index: 10;
+            text-align: center;
+        }
+        .hidden {
+            display: none !important;
+        }
+        h1 {
+            color: #00f0ff;
+            font-size: 28px;
+            margin: 0 0 10px 0;
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+            letter-spacing: 2px;
+        }
+        p {
+            color: #94a3b8;
+            font-size: 14px;
+            margin: 0 0 20px 0;
+            line-height: 1.5;
+        }
+        .btn {
+            background: linear-gradient(135deg, #00f0ff, #0077ff);
+            color: #000;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: bold;
             border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 240, 255, 0.4);
+            margin: 8px 0;
+            width: 100%;
+            max-width: 280px;
+            transition: transform 0.1s;
+        }
+        .btn:active {
+            transform: scale(0.96);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #ff007f, #7000ff);
+            box-shadow: 0 4px 15px rgba(255, 0, 127, 0.4);
+            color: #fff;
+        }
+        .input-group {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            max-width: 280px;
+            margin: 10px 0;
+        }
+        input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            text-align: center;
+        }
+        input:focus {
+            border-color: #00f0ff;
+        }
+        .shop-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            max-width: 280px;
+            margin-bottom: 15px;
         }
     </style>
 </head>
 <body>
 
-<canvas id="gameCanvas"></canvas>
+<div id="gameContainer">
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+    <!-- TUTORIAL / ALOITUS -->
+    <div id="tutorialScreen" class="overlay">
+        <h1>SHADOW DELIVERY</h1>
+        <p>Hiivi futuristisessa kaupungissa, vältä vartijoiden valoja, kerää paketit ja pakene maaliin!</p>
+        <button class="btn" onclick="startGame()">ALOITA PELI</button>
+    </div>
+
+    <!-- KAUPPA / TASOJEN VÄLI -->
+    <div id="shopScreen" class="overlay hidden">
+        <h1>MUSTAN PÖRSSIN KAUPPA</h1>
+        <p id="shopCoins">Kolikot: 🪙 0</p>
+        
+        <div class="shop-grid">
+            <button class="btn" id="speedBtn" onclick="buySpeed()">Päivitä nopeus (25🪙)</button>
+            <button class="btn btn-secondary" onclick="buySkin('neon')">Neon Vihreä (50🪙)</button>
+            <button class="btn btn-secondary" onclick="buySkin('gold')">Kultainen (100🪙)</button>
+            <button class="btn btn-secondary" onclick="buySkin('ninja')">Cyber-Ninja (150🪙)</button>
+            <button class="btn btn-secondary" style="background: linear-gradient(135deg, #d4a373, #bc6c25);" onclick="buySkin('nakkari')">Näkkäri 🍞 (250🪙)</button>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="adminCodeInput" placeholder="Admin-koodi">
+            <button class="btn" style="width: auto; padding: 0 16px;" onclick="checkAdminCode()">OK</button>
+        </div>
+
+        <button class="btn" style="background: #10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" onclick="nextLevel()">JATKA SEURAAVAAN TASOON</button>
+    </div>
+
+    <!-- GAME OVER -->
+    <div id="gameOverScreen" class="overlay hidden">
+        <h1 style="color: #ff0055;">VALO OSUI!</h1>
+        <p>Vartija havaitsi sinut. Kokeile uudelleen!</p>
+        <button class="btn" onclick="retryLevel()">YRITÄ UUDELLEEN</button>
+    </div>
+
+    <!-- WIN SCREEN -->
+    <div id="winScreen" class="overlay hidden">
+        <h1 style="color: #10b981;">TEHTÄVÄ SUORITETTU!</h1>
+        <p>Läpäisit kaikki pääsyn haasteet! Olet todellinen varjokuriiri.</p>
+        <button class="btn" onclick="restartGame()">PELAA UUDESTAAN</button>
+    </div>
+</div>
 
 <script>
 const canvas = document.getElementById('gameCanvas');
@@ -42,63 +175,47 @@ const ctx = canvas.getContext('2d');
 
 const WIDTH = 400;
 const HEIGHT = 600;
-canvas.width = WIDTH;
-canvas.height = HEIGHT;
 
-function resize() {
-    const scale = Math.min(window.innerWidth / WIDTH, window.innerHeight / HEIGHT);
-    canvas.style.width = WIDTH * scale + 'px';
-    canvas.style.height = HEIGHT * scale + 'px';
-}
-window.addEventListener('resize', resize);
-resize();
-
-// Pelitilat
-const STATES = { TUTORIAL: 0, PLAYING: 1, SHOP: 2, GAMEOVER: 3, WIN: 4 };
-let gameState = STATES.TUTORIAL;
-
-// Tallennusmuuttujat (localStorage)
+// Tallennusmuuttujat
 let level = parseInt(localStorage.getItem('sd_level')) || 1;
 let coins = parseInt(localStorage.getItem('sd_coins')) || 0;
 let speedLevel = parseInt(localStorage.getItem('sd_speedLvl')) || 1;
 let unlockedSkins = JSON.parse(localStorage.getItem('sd_skins')) || ['default'];
 let equippedSkin = localStorage.getItem('sd_equipped') || 'default';
 
-// Pelaaja
 let player = {
-    x: 50,
-    y: 520,
-    radius: 12,
-    get speed() { return 2.8 + (speedLevel * 0.4); }
+    x: 50, y: 520, radius: 12,
+    get speed() { return 2.6 + (speedLevel * 0.35); }
 };
 
-// Joystick
 let joystick = {
-    active: false,
-    pointerId: null,
-    startX: 0,
-    startY: 0,
-    x: 0,
-    y: 0,
-    forceX: 0,
-    forceY: 0,
-    radius: 45
+    active: false, pointerId: null,
+    startX: 0, startY: 0, x: 0, y: 0, forceX: 0, forceY: 0, radius: 45
 };
 
 let walls = [];
 let guards = [];
 let packages = [];
-let exitZone = { x: 330, y: 520, radius: 25, active: false };
+let exitZone = { x: 330, y: 520, radius: 24, active: false };
 
-// Skinien määritykset
 const skins = {
-    'default': { name: 'Perus Sininen', color: '#38bdf8', price: 0 },
+    'default': { name: 'Perus Sininen', color: '#00f0ff' },
     'neon': { name: 'Neon Vihreä', color: '#10b981', price: 50 },
     'gold': { name: 'Kultainen', color: '#f59e0b', price: 100 },
-    'nakkari': { name: 'Näkkäri 🍞', color: '#d4a373', price: 999, secret: true }
+    'ninja': { name: 'Cyber-Ninja', color: '#a855f7', price: 150 },
+    'nakkari': { name: 'Näkkäri 🍞', color: '#d4a373', price: 250 }
 };
 
-function saveGameData() {
+// Tasokohtaiset taustavärit ja teemat
+const levelThemes = [
+    { bg: '#090916', grid: 'rgba(0, 240, 255, 0.03)', wall: '#1e1b4b', border: '#312e81' },
+    { bg: '#110516', grid: 'rgba(255, 0, 127, 0.03)', wall: '#4a044e', border: '#701a75' },
+    { bg: '#022c22', grid: 'rgba(16, 185, 129, 0.03)', wall: '#064e3b', border: '#065f46' },
+    { bg: '#2e1065', grid: 'rgba(168, 85, 247, 0.03)', wall: '#581c87', border: '#6b21a8' },
+    { bg: '#451a03', grid: 'rgba(245, 158, 11, 0.03)', wall: '#78350f', border: '#92400e' }
+];
+
+function saveGame() {
     localStorage.setItem('sd_level', level);
     localStorage.setItem('sd_coins', coins);
     localStorage.setItem('sd_speedLvl', speedLevel);
@@ -106,83 +223,136 @@ function saveGameData() {
     localStorage.setItem('sd_equipped', equippedSkin);
 }
 
-function loadLevel(lvl) {
+// Generoi aina täysin uuden tason
+function generateLevel(lvl) {
     walls = [];
     guards = [];
     packages = [];
 
-    // Mitä pidemmälle päästään, sitä enemmän seiniä, paketteja ja vartijoita
-    let guardCount = Math.min(1 + Math.floor(lvl / 2), 4);
-    let pkgCount = Math.min(1 + Math.floor(lvl / 3), 3);
-
-    // Satunnaistetaan hieman rakenteita tason mukaan
-    if (lvl === 1) {
-        walls = [{ x: 120, y: 150, w: 30, h: 250 }, { x: 240, y: 200, w: 30, h: 250 }];
-    } else {
-        walls = [
-            { x: 80, y: 120, w: 100, h: 25 },
-            { x: 220, y: 280, w: 100, h: 25 },
-            { x: 140, y: 400, w: 120, h: 25 }
-        ];
+    // Kasvava vaikeustaso ja dynaamiset rakenteet
+    let wallCount = 2 + Math.floor(lvl / 2);
+    for (let i = 0; i < wallCount; i++) {
+        let w = 70 + Math.random() * 80;
+        let h = 20;
+        let x = 30 + Math.random() * (WIDTH - w - 60);
+        let y = 100 + i * (350 / wallCount) + Math.random() * 40;
+        walls.push({ x, y, w, h });
     }
 
-    // Luodaan vartijat omilla skineillä / väreillä
-    const guardColors = ['#ef4444', '#ec4899', '#8b5cf6', '#f97316'];
+    let guardCount = Math.min(1 + Math.floor(lvl / 2), 5);
     for (let i = 0; i < guardCount; i++) {
         guards.push({
-            x: 80 + i * 80,
-            y: 100 + i * 110,
-            vx: (i % 2 === 0 ? 2 : -2) * (1 + lvl * 0.1),
-            minX: 40,
-            maxX: 360,
+            x: 60 + Math.random() * 280,
+            y: 90 + i * 90,
+            vx: (Math.random() > 0.5 ? 1.5 : -1.5) * (1 + lvl * 0.08),
+            vy: lvl > 3 && i % 2 === 0 ? (Math.random() > 0.5 ? 1 : -1) * 1.2 : 0,
+            minX: 30, maxX: 370,
+            minY: 80, maxY: 480,
             radius: 10,
-            angle: i * Math.PI / 2,
-            spread: 0.5,
-            length: 110,
-            color: guardColors[i % guardColors.length]
+            angle: Math.random() * Math.PI * 2,
+            spread: 0.5 + Math.min(lvl * 0.02, 0.3),
+            length: 100 + Math.min(lvl * 5, 40),
+            color: ['#ff0055', '#ff9900', '#bf00ff', '#00ffcc'][i % 4]
         });
     }
 
-    // Luodaan paketit kerättäväksi
+    let pkgCount = Math.min(1 + Math.floor(lvl / 3), 3);
     for (let i = 0; i < pkgCount; i++) {
         packages.push({
-            x: 100 + (i * 100),
-            y: 70 + (i * 80),
-            radius: 10,
+            x: 60 + Math.random() * 280,
+            y: 70 + Math.random() * 400,
+            radius: 11,
             collected: false
         });
     }
 
-    exitZone = { x: 350, y: 520, radius: 22, active: false };
+    exitZone = { x: 330, y: 540, radius: 24, active: false };
     player.x = 50; 
-    player.y = 520;
+    player.y = 550;
 }
 
-// Ohjaus & Klikkaukset
+// UI-toiminnot
+function startGame() {
+    document.getElementById('tutorialScreen').classList.add('hidden');
+    generateLevel(level);
+    requestAnimationFrame(loop);
+}
+
+function nextLevel() {
+    level++;
+    saveGame();
+    document.getElementById('shopScreen').classList.add('hidden');
+    generateLevel(level);
+}
+
+function retryLevel() {
+    document.getElementById('gameOverScreen').classList.add('hidden');
+    generateLevel(level);
+}
+
+function restartGame() {
+    level = 1;
+    saveGame();
+    document.getElementById('winScreen').classList.add('hidden');
+    generateLevel(level);
+}
+
+function openShop() {
+    document.getElementById('shopCoins').innerText = `Kolikot: 🪙 ${coins}`;
+    document.getElementById('speedBtn').innerText = `Päivitä nopeus (Taso ${speedLevel}): ${speedLevel * 25}🪙`;
+    document.getElementById('shopScreen').classList.remove('hidden');
+}
+
+function buySpeed() {
+    let cost = speedLevel * 25;
+    if (coins >= cost) {
+        coins -= cost;
+        speedLevel++;
+        saveGame();
+        openShop();
+    } else {
+        alert("Ei tarpeeksi kolikoita!");
+    }
+}
+
+function buySkin(skinKey) {
+    let skin = skins[skinKey];
+    if (unlockedSkins.includes(skinKey)) {
+        equippedSkin = skinKey;
+        saveGame();
+        alert(`Otettu käyttöön: ${skin.name}`);
+    } else if (coins >= skin.price) {
+        coins -= skin.price;
+        unlockedSkins.push(skinKey);
+        equippedSkin = skinKey;
+        saveGame();
+        openShop();
+        alert(`Ostettu ja otettu käyttöön: ${skin.name}!`);
+    } else {
+        alert("Ei tarpeeksi kolikoita!");
+    }
+}
+
+function checkAdminCode() {
+    let code = document.getElementById('adminCodeInput').value.trim();
+    if (code.toUpperCase() === "NAKKARI") {
+        if (!unlockedSkins.includes('nakkari')) unlockedSkins.push('nakkari');
+        equippedSkin = 'nakkari';
+        saveGame();
+        openShop();
+        alert("Admin-koodi hyväksytty! Legendaarinen Näkkäri-skini avattu! 🍞🔥");
+        document.getElementById('adminCodeInput').value = '';
+    } else {
+        alert("Väärä koodi!");
+    }
+}
+
+// Touch / Joystick tapahtumat
 canvas.addEventListener('pointerdown', (e) => {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.clientX - rect.left;
     const clientY = e.clientY - rect.top;
 
-    if (gameState === STATES.TUTORIAL) {
-        gameState = STATES.PLAYING;
-        loadLevel(level);
-        return;
-    }
-
-    if (gameState === STATES.SHOP) {
-        handleShopClick(clientX, clientY);
-        return;
-    }
-
-    if (gameState === STATES.GAMEOVER || gameState === STATES.WIN) {
-        if (gameState === STATES.WIN) level = 1;
-        gameState = STATES.PLAYING;
-        loadLevel(level);
-        return;
-    }
-
-    // Joystick aktivointi
     if (!joystick.active) {
         joystick.active = true;
         joystick.pointerId = e.pointerId;
@@ -197,7 +367,7 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 
 canvas.addEventListener('pointermove', (e) => {
-    if (!joystick.active || e.pointerId !== joystick.pointerId || gameState !== STATES.PLAYING) return;
+    if (!joystick.active || e.pointerId !== joystick.pointerId) return;
     const rect = canvas.getBoundingClientRect();
     const clientX = e.clientX - rect.left;
     const clientY = e.clientY - rect.top;
@@ -228,62 +398,6 @@ function endJoystick(e) {
 canvas.addEventListener('pointerup', endJoystick);
 canvas.addEventListener('pointercancel', endJoystick);
 
-function handleShopClick(x, y) {
-    // Nopeuspäivitys nappi
-    if (x > 50 && x < 350 && y > 160 && y < 210) {
-        let cost = speedLevel * 25;
-        if (coins >= cost) {
-            coins -= cost;
-            speedLevel++;
-            saveGameData();
-        }
-    }
-
-    // Skinit: Neon
-    if (x > 50 && x < 190 && y > 260 && y < 310) {
-        buyOrEquipSkin('neon');
-    }
-    // Skinit: Gold
-    if (x > 210 && x < 350 && y > 260 && y < 310) {
-        buyOrEquipSkin('gold');
-    }
-    // Skinit: Näkkäri
-    if (x > 50 && x < 190 && y > 330 && y < 380) {
-        buyOrEquipSkin('nakkari');
-    }
-
-    // Admin-koodi nappi
-    if (x > 210 && x < 350 && y > 330 && y < 380) {
-        let code = prompt("Syötä Admin-koodi:");
-        if (code && code.toUpperCase() === "NAKKARI") {
-            if (!unlockedSkins.includes('nakkari')) unlockedSkins.push('nakkari');
-            equippedSkin = 'nakkari';
-            saveGameData();
-            alert("Salainen Näkkäri-skini avattu! 🍞");
-        } else if (code) {
-            alert("Väärä koodi!");
-        }
-    }
-
-    // Jatka seuraavaan tasoon nappi
-    if (x > 100 && x < 300 && y > 470 && y < 530) {
-        gameState = STATES.PLAYING;
-        loadLevel(level);
-    }
-}
-
-function buyOrEquipSkin(skinKey) {
-    let skin = skins[skinKey];
-    if (unlockedSkins.includes(skinKey)) {
-        equippedSkin = skinKey;
-    } else if (coins >= skin.price) {
-        coins -= skin.price;
-        unlockedSkins.push(skinKey);
-        equippedSkin = skinKey;
-    }
-    saveGameData();
-}
-
 function checkWallCollision(nx, ny) {
     for (let w of walls) {
         if (
@@ -299,8 +413,6 @@ function checkWallCollision(nx, ny) {
 }
 
 function update() {
-    if (gameState !== STATES.PLAYING) return;
-
     if (joystick.active) {
         let nextX = player.x + joystick.forceX * player.speed;
         let nextY = player.y + joystick.forceY * player.speed;
@@ -312,10 +424,14 @@ function update() {
     player.x = Math.max(player.radius, Math.min(WIDTH - player.radius, player.x));
     player.y = Math.max(player.radius, Math.min(HEIGHT - player.radius, player.y));
 
-    // Vartijoiden liike
+    // Vartijoiden liike ja kulmat
     guards.forEach(g => {
         g.x += g.vx;
         if (g.x < g.minX || g.x > g.maxX) g.vx *= -1;
+        if (g.vy) {
+            g.y += g.vy;
+            if (g.y < g.minY || g.y > g.maxY) g.vy *= -1;
+        }
         g.angle += 0.025;
 
         let dx = player.x - g.x;
@@ -326,19 +442,20 @@ function update() {
             let angleToPlayer = Math.atan2(dy, dx);
             let angleDiff = Math.abs(normalizeAngle(angleToPlayer - g.angle));
             if (angleDiff < g.spread / 2) {
-                gameState = STATES.GAMEOVER;
+                document.getElementById('gameOverScreen').classList.remove('hidden');
+                joystick.active = false;
             }
         }
     });
 
-    // Pakettien keräys
+    // Paketit
     packages.forEach(pkg => {
         if (!pkg.collected) {
             let dist = Math.hypot(player.x - pkg.x, player.y - pkg.y);
             if (dist < player.radius + pkg.radius) {
                 pkg.collected = true;
-                coins += 10; // Ansaitse kolikoita paketista
-                saveGameData();
+                coins += 15;
+                saveGame();
                 if (packages.every(p => p.collected)) {
                     exitZone.active = true;
                 }
@@ -346,14 +463,16 @@ function update() {
         }
     });
 
-    // Maaliin pääsy -> Siirry kauppaan!
+    // Maaliin pääsy -> Avaa kauppa
     let allCollected = packages.every(p => p.collected);
     if (allCollected && exitZone.active) {
         let distToExit = Math.hypot(player.x - exitZone.x, player.y - exitZone.y);
         if (distToExit < player.radius + exitZone.radius) {
-            level++;
-            saveGameData();
-            gameState = STATES.SHOP; // Avataan tason välissä kauppa!
+            if (level >= 5) {
+                document.getElementById('winScreen').classList.remove('hidden');
+            } else {
+                openShop();
+            }
         }
     }
 }
@@ -365,185 +484,102 @@ function normalizeAngle(angle) {
 }
 
 function draw() {
-    ctx.clearRect(0, 0, WIDTH, HEIGHT);
+    let theme = levelThemes[(level - 1) % levelThemes.length];
 
-    if (gameState === STATES.PLAYING || gameState === STATES.GAMEOVER) {
-        // Seinät
-        ctx.fillStyle = '#27272a';
-        ctx.strokeStyle = '#3f3f46';
-        ctx.lineWidth = 2;
-        walls.forEach(w => {
-            ctx.fillRect(w.x, w.y, w.w, w.h);
-            ctx.strokeRect(w.x, w.y, w.w, w.h);
-        });
+    // Tausta ja ruudukko
+    ctx.fillStyle = theme.bg;
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-        // Vartijat ja heidän skinit/värit
-        guards.forEach(g => {
-            ctx.save();
-            ctx.beginPath();
-            ctx.moveTo(g.x, g.y);
-            ctx.arc(g.x, g.y, g.length, g.angle - g.spread / 2, g.angle + g.spread / 2);
-            ctx.lineTo(g.x, g.y);
-            ctx.fillStyle = 'rgba(239, 68, 68, 0.15)';
-            ctx.fill();
-            ctx.restore();
+    ctx.strokeStyle = theme.grid;
+    ctx.lineWidth = 1;
+    for (let x = 0; x < WIDTH; x += 30) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, HEIGHT); ctx.stroke();
+    }
+    for (let y = 0; y < HEIGHT; y += 30) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(WIDTH, y); ctx.stroke();
+    }
 
-            ctx.fillStyle = g.color;
-            ctx.beginPath();
-            ctx.arc(g.x, g.y, g.radius, 0, Math.PI * 2);
-            ctx.fill();
-        });
+    // Seinät
+    ctx.fillStyle = theme.wall;
+    ctx.strokeStyle = theme.border;
+    ctx.lineWidth = 2;
+    walls.forEach(w => {
+        ctx.fillRect(w.x, w.y, w.w, w.h);
+        ctx.strokeRect(w.x, w.y, w.w, w.h);
+    });
 
-        // Paketit
-        packages.forEach(pkg => {
-            if (!pkg.collected) {
-                ctx.fillStyle = '#f59e0b';
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = '#f59e0b';
-                ctx.fillRect(pkg.x - pkg.radius, pkg.y - pkg.radius, pkg.radius * 2, pkg.radius * 2);
-                ctx.shadowBlur = 0;
-            }
-        });
-
-        // Maali
-        let allCollected = packages.every(p => p.collected);
-        ctx.fillStyle = allCollected ? '#10b981' : '#3f3f46';
+    // Vartijoiden valokeilat
+    guards.forEach(g => {
+        ctx.save();
         ctx.beginPath();
-        ctx.arc(exitZone.x, exitZone.y, exitZone.radius, 0, Math.PI * 2);
+        ctx.moveTo(g.x, g.y);
+        ctx.arc(g.x, g.y, g.length, g.angle - g.spread / 2, g.angle + g.spread / 2);
+        ctx.lineTo(g.x, g.y);
+        ctx.fillStyle = 'rgba(255, 0, 85, 0.12)';
         ctx.fill();
+        ctx.restore();
 
-        // Pelaaja ja sen skini (Näkkäri piirretään hauskasti ruskeana ruudulla)
-        let skinColor = skins[equippedSkin].color;
-        ctx.fillStyle = skinColor;
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = skinColor;
-        if (equippedSkin === 'nakkari') {
-            ctx.fillRect(player.x - player.radius, player.y - player.radius, player.radius * 2, player.radius * 2);
-        } else {
-            ctx.beginPath();
-            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-            ctx.fill();
+        ctx.fillStyle = g.color;
+        ctx.beginPath();
+        ctx.arc(g.x, g.y, g.radius, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    // Paketit
+    packages.forEach(pkg => {
+        if (!pkg.collected) {
+            ctx.fillStyle = '#f59e0b';
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = '#f59e0b';
+            ctx.fillRect(pkg.x - pkg.radius, pkg.y - pkg.radius, pkg.radius * 2, pkg.radius * 2);
+            ctx.shadowBlur = 0;
         }
-        ctx.shadowBlur = 0;
+    });
 
-        // Joystick
-        if (joystick.active) {
-            ctx.beginPath();
-            ctx.arc(joystick.startX, joystick.startY, joystick.radius, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-            ctx.stroke();
+    // Maali
+    let allCollected = packages.every(p => p.collected);
+    ctx.fillStyle = allCollected ? '#10b981' : '#27272a';
+    ctx.shadowBlur = allCollected ? 15 : 0;
+    ctx.shadowColor = '#10b981';
+    ctx.beginPath();
+    ctx.arc(exitZone.x, exitZone.y, exitZone.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
 
-            ctx.beginPath();
-            ctx.arc(joystick.x, joystick.y, 22, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(56, 189, 248, 0.6)';
-            ctx.fill();
-        }
+    // Pelaaja ja skinit
+    let skinColor = skins[equippedSkin].color;
+    ctx.fillStyle = skinColor;
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = skinColor;
+    if (equippedSkin === 'nakkari') {
+        ctx.fillRect(player.x - player.radius, player.y - player.radius, player.radius * 2, player.radius * 2);
+    } else {
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.shadowBlur = 0;
 
-        // HUD / Yläpalkki
-        ctx.fillStyle = '#f4f4f5';
-        ctx.font = 'bold 15px sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(`Taso: ${level} | Kolikot: 🪙 ${coins}`, 20, 30);
+    // Joystick
+    if (joystick.active) {
+        ctx.beginPath();
+        ctx.arc(joystick.startX, joystick.startY, joystick.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.2)';
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(joystick.x, joystick.y, 22, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 240, 255, 0.6)';
+        ctx.fill();
     }
 
-    // KAUPPA-VALIKKO TASOJEN VÄLISSÄ
-    if (gameState === STATES.SHOP) {
-        ctx.fillStyle = 'rgba(9, 9, 11, 0.96)';
-        ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-        ctx.fillStyle = '#38bdf8';
-        ctx.font = 'bold 26px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('PÄIVITYSKKAUPPA', WIDTH / 2, 60);
-
-        ctx.fillStyle = '#f59e0b';
-        ctx.font = '16px sans-serif';
-        ctx.fillText(`Kolikot: 🪙 ${coins}`, WIDTH / 2, 95);
-
-        // Nopeuspäivitys-nappi
-        ctx.fillStyle = '#1e1b4b';
-        ctx.strokeStyle = '#3b82f6';
-        ctx.lineWidth = 2;
-        ctx.fillRect(50, 150, 300, 50);
-        ctx.strokeRect(50, 150, 300, 50);
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 14px sans-serif';
-        let speedCost = speedLevel * 25;
-        ctx.fillText(`Päivitä nopeus (Taso ${speedLevel}): ${speedCost}🪙`, WIDTH / 2, 180);
-
-        // Skinit nappien piirrot
-        drawShopButton(50, 250, 140, 50, 'Neon Vihreä', 'neon');
-        drawShopButton(210, 250, 140, 50, 'Kultainen', 'gold');
-        drawShopButton(50, 320, 140, 50, 'Näkkäri 🍞', 'nakkari');
-
-        // Admin-koodi nappi
-        ctx.fillStyle = '#3f3f46';
-        ctx.fillRect(210, 320, 140, 50);
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 13px sans-serif';
-        ctx.fillText('Admin Koodi 🔑', 280, 350);
-
-        // Seuraava taso -nappi
-        ctx.fillStyle = '#10b981';
-        ctx.fillRect(80, 460, 240, 60);
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 18px sans-serif';
-        ctx.fillText('JATKA SEURAAVAAN TASOON', WIDTH / 2, 495);
-    }
-
-    // Tutoriaali
-    if (gameState === STATES.TUTORIAL) {
-        ctx.fillStyle = 'rgba(9, 9, 11, 0.95)';
-        ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-        ctx.fillStyle = '#38bdf8';
-        ctx.font = 'bold 26px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('SHADOW DELIVERY', WIDTH / 2, HEIGHT / 2 - 100);
-
-        ctx.fillStyle = '#d4d4d8';
-        ctx.font = '14px sans-serif';
-        ctx.fillText('1. Liiku raahaamalla näyttöä.', WIDTH / 2, HEIGHT / 2 - 40);
-        ctx.fillText('2. Vältä vartijoiden valoja ja kerää paketit.', WIDTH / 2, HEIGHT / 2 - 10);
-        ctx.fillText('3. Osta skinejä ja parannuksia tasojen välissä!', WIDTH / 2, HEIGHT / 2 + 20);
-
-        ctx.fillStyle = '#f4f4f5';
-        ctx.font = 'bold 16px sans-serif';
-        ctx.fillText('Napauta aloittaaksesi', WIDTH / 2, HEIGHT / 2 + 90);
-    }
-
-    // Game Over
-    if (gameState === STATES.GAMEOVER) {
-        ctx.fillStyle = 'rgba(9, 9, 11, 0.9)';
-        ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-        ctx.fillStyle = '#ef4444';
-        ctx.font = 'bold 30px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('VALO OSI!', WIDTH / 2, HEIGHT / 2 - 30);
-
-        ctx.fillStyle = '#38bdf8';
-        ctx.font = 'bold 16px sans-serif';
-        ctx.fillText('Napauta yrittääksesi uudelleen', WIDTH / 2, HEIGHT / 2 + 30);
-    }
-}
-
-function drawShopButton(x, y, w, h, label, skinKey) {
-    let isUnlocked = unlockedSkins.includes(skinKey);
-    let isEquipped = equippedSkin === skinKey;
-
-    ctx.fillStyle = isEquipped ? '#10b981' : (isUnlocked ? '#3b82f6' : '#27272a');
-    ctx.fillRect(x, y, w, h);
-    ctx.strokeStyle = '#52525b';
-    ctx.strokeRect(x, y, w, h);
-
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 13px sans-serif';
-    ctx.textAlign = 'center';
-    let text = isEquipped ? `${label} (Käytössä)` : (isUnlocked ? `${label}` : `${label} (${skins[skinKey].price}🪙)`);
-    ctx.fillText(text, x + w / 2, y + 30);
+    // HUD yläpalkki
+    ctx.fillStyle = '#f8fafc';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`Taso: ${level}/5 | 🪙 ${coins}`, 20, 30);
 }
 
 function loop() {
@@ -551,8 +587,6 @@ function loop() {
     draw();
     requestAnimationFrame(loop);
 }
-
-loop();
 </script>
 
 </body>
